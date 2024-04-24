@@ -1,0 +1,84 @@
+name: next-cloud
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: next-aplication
+  LOCATION: us-central1
+  REPOSITORY: test-next-gcloud
+  IMAGE: image-next
+
+jobs:
+  #stops the previous pipeline if one is running and leaves only the last pipeline corresponding to the last push.
+  avoid_reduncy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Redundant Builds
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Build
+        run: npm run build
+
+  #Deploy de application in gcloud.
+  deploy:
+    permissions:
+      contents: read
+      id-token: write
+
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      #gcloud is accessed
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          credentials_json: '${{ secrets.SECRET_NEXT }}'
+
+      #cloud sdk is installed in virtual machine to avoid problems when executing gcloud commands.
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      #Build a Docker container push in gcloud.
+      - name: Docker Auth
+        run: gcloud auth configure-docker
+
+      - name: Build and tag Container
+        run: |-
+          docker build . --tag gcr.io/$PROJECT_ID/$REPOSITORY:$GITHUB_SHA
+
+      - name: Push Container
+        run: |-
+          docker push gcr.io/$PROJECT_ID/$REPOSITORY:$GITHUB_SHA
+
+      - name: Deploy Google Cloud Run
+        run: |-
+            gcloud run deploy $REPOSITORY \
+            --region $LOCATION \
+            --image gcr.io/$PROJECT_ID/$REPOSITORY:$GITHUB_SHA \
+            --platform "managed" \
+            --quiet
