@@ -54,9 +54,8 @@ jobs:
       #gcloud is accessed
       - name: Google Auth
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v1
         with:
-          token_format: access_token
           credentials_json: '${{ secrets.SECRET_NEXT }}'
 
       #cloud sdk is installed in virtual machine to avoid problems when executing gcloud commands.
