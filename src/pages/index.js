@@ -3,9 +3,12 @@ import Image from 'next/image';
 
 const Home = () => {
   const images = [
-    { id: 1, url: '/images/image1.jpg' },
-    { id: 2, url: '/images/image2.png' },
-    { id: 3, url: '/images/image3.png' },
+    // { id: 1, url: '/images/image1.jpg' },
+    // { id: 2, url: '/images/image2.png' },
+    // { id: 3, url: '/images/image3.png' },
+    { id: 1, url: 'http://130.211.16.62/images/image1.jpg' },
+    { id: 2, url: 'http://130.211.16.62/images/image2.png' },
+    { id: 3, url: 'http://130.211.16.62/images/image3.png' },
     // Agrega más objetos según sea necesario
   ];
 
